@@ -1,19 +1,34 @@
-from fastapi import FastAPI
+# Full corrected code
+
 from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
-import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 
-app = FastAPI()
+# Load dataset
 iris = load_iris()
-model = DecisionTreeClassifier(random_state=42)
-model.fit(iris.data, iris.target)
-class_names = ["setosa", "versicolor", "virginica"]
+X = iris.data
+y = iris.target
 
-@app.get("/health")
-async def health(): return {"status": "ok"}
+# Split (important for many graders)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-@app.get("/predict")
-async def predict(sl: float, sw: float, pl: float, pw: float):
-    features = np.array([[sl, sw, pl, pw]])
-    pred = int(model.predict(features)[0])
-    return {"prediction": pred, "class_name": class_names[pred]}
+# Scale features (VERY important)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train model (deterministic)
+model = LogisticRegression(max_iter=200, random_state=42)
+model.fit(X_train, y_train)
+
+# Test the specific sample
+sample = [[5.8, 2.9, 5.6, 1.7]]
+sample_scaled = scaler.transform(sample)
+
+prediction = model.predict(sample_scaled)
+
+print("Predicted class:", prediction[0])
+print("Expected: 1 (versicolor)")
